@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Interfaz ContratoTFG (ERC-20 + ERC-721)</title>
+  <style>
+    /* Reset básico y tipografía */
+    * {
+      box-sizing: border-box;
+    }
+    body { 
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      max-width: 1500px; /* Aumentado para dar espacio a la sidebar */
+      margin: 25px auto; 
+      background-color: #f4f7f6;
+      color: #1a1a1a;
+    }
+    h2, h3, h4 { 
+      color: #111; 
+      letter-spacing: -0.5px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    h3 {
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 8px;
+      display: inline-block;
+      margin-top: 0;
+    }
+    h4 {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 6px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    hr { 
+      border: 0; 
+      border-top: 1px solid #eee; 
+      margin: 20px 0; 
+    }
+
+    /* --- NUEVO: Layout Principal --- */
+    .page-container {
+      display: flex;
+      gap: 25px;
+      align-items: flex-start; /* Alinea los items al inicio */
+    }
+
+    /* --- NUEVO: Barra Lateral de Cuentas --- */
+    #sidebar {
+      flex: 0 0 320px; /* No crece, no se encoge, 320px de ancho */
+      position: sticky; /* Se queda fija al hacer scroll */
+      top: 25px; /* Margen superior al pegarse */
+    }
+    #sidebar h3 {
+      border-color: #5856d6;
+      margin-top: 0;
+    }
+    #account-list {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      max-height: 75vh; /* Altura máxima antes de scroll */
+      overflow-y: auto;
+    }
+    .account-item {
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .account-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .account-item strong {
+      display: block;
+      color: #007bff;
+      font-size: 0.95em;
+      margin-bottom: 4px;
+    }
+    .account-item span {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9em;
+      color: #333;
+      word-wrap: break-word; /* Rompe la dirección para que quepa */
+    }
+
+    /* --- NUEVO: Contenedor Principal --- */
+    #main-content {
+      flex: 1; /* Ocupa el resto del espacio */
+      min-width: 0; /* Previene desbordamiento de flexbox */
+    }
+    
+    /* Estilo de las tarjetas (Cards) */
+    .card { 
+      border: 1px solid #ddd; 
+      padding: 20px 25px; 
+      border-radius: 12px; 
+      margin-bottom: 25px; 
+      background-color: #ffffff; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    /* Layout de las filas (Row) */
+    .row { 
+      display: flex; 
+      gap: 12px; 
+      margin-bottom: 12px; 
+      align-items: center;
+      flex-wrap: wrap; 
+    }
+    label { 
+      min-width: 150px; 
+      text-align: right; 
+      font-size: 0.9em; 
+      color: #444;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    /* Estilo de Inputs, Selects y Botones */
+    input, select, button { 
+      padding: 10px 12px; 
+      border-radius: 8px; 
+      border: 1px solid #ccc; 
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    input[type="text"], input[type="number"], select { 
+      flex: 1; 
+      min-width: 150px; 
+      background-color: #fcfcfc;
+    }
+    input:focus, select:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+      outline: none;
+    }
+    select {
+      flex-grow: 1;
+    }
+
+    /* Estilo de Botones */
+    button { 
+      flex-grow: 0; 
+      flex-shrink: 0;
+      cursor: pointer; 
+      background-color: #007bff; 
+      color: white; 
+      border: none; 
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    button:hover { 
+      opacity: 0.85;
+      transform: translateY(-1px); 
+    }
+
+    /* Colores de Botones */
+    button.admin-btn { background-color: #dc3545; }
+    button.role-btn { background-color: #28a745; } 
+    button.read-btn { background-color: #5856d6; } 
+    
+    /* Output/Log */
+    #output { 
+      white-space: pre-wrap; 
+      background: #282c34; 
+      color: #f1f1f1;
+      padding: 20px; 
+      border-radius: 8px; 
+      margin-top: 20px; 
+      min-height: 200px; 
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Checkbox */
+    input[type="checkbox"] {
+      flex-grow: 0;
+      min-width: auto;
+      width: 18px;
+      height: 18px;
+    }
+    label.checkbox-label {
+      min-width: auto;
+      text-align: left;
+      margin-left: -5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Interfaz <code>ContratoTFG</code> (Híbrido ERC-20 + ERC-721)</h2>
+
+  <!-- ¡¡¡NUEVO: Contenedor de Página!!! -->
+  <div class="page-container">
+
+    <!-- ¡¡¡NUEVO: Barra Lateral de Cuentas!!! -->
+    <div id="sidebar">
+      <h3>Cuentas Disponibles</h3>
+      <div id="account-list">
+        <!-- Las cuentas se cargarán aquí con JS -->
+      </div>
+    </div>
+
+    <!-- ¡¡¡NUEVO: Contenedor de Contenido Principal!!! -->
+    <div id="main-content">
+
+      <!-- SECCIÓN GLOBAL -->
+      <div class="card">
+        <h4>Información Global y Estado</h4>
+        <div class="row">
+          <label>Cuenta (from):</label>
+          <select id="accountSelect"></select>
+        </div>
+        <div class="row">
+            <label>Consultas Globales:</label>
+            <button id="btnOwner" class="read-btn">Owner</button>
+            <button id="btnPaused" class="read-btn">Paused?</button>
+        </div>
+         <div class="row">
+            <label>isMinter (address):</label>
+            <input id="isMinterAddr" placeholder="0x..."/>
+            <button id="btnIsMinter" class="read-btn">Consultar</button>
+        </div>
+        <div class="row">
+            <label>isBurner (address):</label>
+            <input id="isBurnerAddr" placeholder="0x..."/>
+            <button id="btnIsBurner" class="read-btn">Consultar</button>
+        </div>
+      </div>
+
+      <!-- SECCIÓN ERC-20 -->
+      <div class="card">
+        <h3>Token Fungible (ERC-20)</h3>
+        <h4>Lecturas ERC-20</h4>
+        <div class="row">
+            <label>Info Básica:</label>
+            <button id="btnErc20Name" class="read-btn">name</button>
+            <button id="btnErc20Symbol" class="read-btn">symbol</button>
+            <button id="btnErc20Decimals" class="read-btn">decimals</button>
+            <button id="btnErc20TotalSupply" class="read-btn">totalSupply</button>
+        </div>
+        <div class="row">
+            <label>balanceOf (address):</label>
+            <input id="e20_balanceAddr" placeholder="0x..."/>
+            <button id="btnErc20Balance" class="read-btn">Consultar</button>
+        </div>
+        <div class="row">
+            <label>allowance:</label>
+            <input id="e20_allow_owner" placeholder="owner"/>
+            <input id="e20_allow_spender" placeholder="spender"/>
+            <button id="btnErc20Allowance" class="read-btn">Consultar</button>
+        </div>
+
+        <hr>
+        <h4>Transacciones ERC-20</h4>
+        <div class="row">
+            <label>Transfer:</label>
+            <input id="e20_tx_to" placeholder="to address" />
+            <input id="e20_tx_amount" placeholder="amount (p.e. 1.5)" />
+            <button id="btnErc20Transfer">Transfer</button>
+        </div>
+         <div class="row">
+            <label>Approve:</label>
+            <input id="e20_app_spender" placeholder="spender" />
+            <input id="e20_app_amount" placeholder="amount" />
+            <button id="btnErc20Approve">Approve</button>
+        </div>
+         <div class="row">
+            <label>TransferFrom:</label>
+            <input id="e20_tf_owner" placeholder="owner (from)" />
+            <input id="e20_tf_to" placeholder="to" />
+            <input id="e20_tf_amount" placeholder="amount" />
+            <button id="btnErc20TransferFrom">TransferFrom</button>
+        </div>
+        <div class="row">
+            <label>Inc/Dec Allowance:</label>
+            <input id="e20_allow_chg_spender" placeholder="spender" />
+            <input id="e20_allow_chg_amount" placeholder="amount" />
+        </div>
+         <div class="row">
+            <label></label> <!-- Label vacía para alinear botones -->
+            <button id="btnErc20IncAllow">Increase</button>
+            <button id="btnErc20DecAllow">Decrease</button>
+        </div>
+      </div>
+
+      <!-- SECCIÓN ERC-721 -->
+      <div class="card">
+        <h3>Token No-Fungible (ERC-721)</h3>
+        <h4>Lecturas NFT</h4>
+        <div class="row">
+            <label>Info Básica:</label>
+            <button id="btnNftName" class="read-btn">nftName</button>
+            <button id="btnNftSymbol" class="read-btn">nftSymbol</button>
+            <button id="btnNftTotalSupply" class="read-btn">totalSupplyNFT</button>
+        </div>
+        <div class="row">
+            <label>balanceOfNFT (addr):</label>
+            <input id="nft_balanceAddr" placeholder="0x..."/>
+            <button id="btnNftBalance" class="read-btn">Consultar</button>
+        </div>
+        <div class="row">
+            <label>ownerOf (tokenId):</label>
+            <input id="nft_ownerOfId" placeholder="Token ID (e.j. 0)" type="number" min="0"/>
+            <button id="btnNftOwnerOf" class="read-btn">Consultar</button>
+        </div>
+        <div class="row">
+            <label>tokenURI (tokenId):</label>
+            <input id="nft_tokenURIId" placeholder="Token ID (e.j. 0)" type="number" min="0"/>
+            <button id="btnNftTokenURI" class="read-btn">Consultar</button>
+        </div>
+         <div class="row">
+            <label>getApproved (tokenId):</label>
+            <input id="nft_getApprovedId" placeholder="Token ID (e.j. 0)" type="number" min="0"/>
+            <button id="btnNftGetApproved" class="read-btn">Consultar</button>
+        </div>
+        <div class="row">
+            <label>isApprovedForAll:</label>
+            <input id="nft_isApprovedOwner" placeholder="owner"/>
+            <input id="nft_isApprovedOperator" placeholder="operator"/>
+            <button id="btnNftIsApproved" class="read-btn">Consultar</button>
+        </div>
+        
+        <hr>
+        <h4>Transacciones NFT</h4>
+        <div class="row">
+            <label>ApproveNFT:</label>
+            <input id="nft_app_to" placeholder="to (spender)" />
+            <input id="nft_app_tokenId" placeholder="tokenId" type="number" min="0" />
+            <button id="btnNftApprove">Approve</button>
+        </div>
+        <div class="row">
+            <label>SetApprovalForAll:</label>
+            <input id="nft_sa_operator" placeholder="operator" />
+            <input id="nft_sa_check" type="checkbox" /> 
+            <label class="checkbox-label">Approved?</label>
+            <button id="btnNftSetApproval">Set</button>
+        </div>
+        <div class="row">
+            <label>TransferFromNFT:</label>
+            <input id="nft_tf_owner" placeholder="owner (from)" />
+            <input id="nft_tf_to" placeholder="to (recipient)" />
+            <input id="nft_tf_tokenId" placeholder="tokenId" type="number" min="0" />
+            <button id="btnNftTransferFrom">TransferFrom</button>
+        </div>
+      </div>
+
+      <!-- SECCIÓN ADMIN -->
+      <div class="card">
+        <h3>Panel de Administración (Roles)</h3>
+        
+        <h4 style="color: #28a745;">Funciones de Minter (ERC-20 & NFT)</h4>
+         <div class="row">
+            <label>Mint ERC-20:</label>
+            <input id="e20_mint_to" placeholder="to address" />
+            <input id="e20_mint_amount" placeholder="amount" />
+            <button id="btnErc20Mint" class="role-btn">Mint ERC-20</button>
+        </div>
+         <div class="row">
+            <label>Mint NFT:</label>
+            <input id="nft_mint_to" placeholder="to address" />
+            <input id="nft_mint_tokenId" placeholder="tokenId" type="number" min="0" />
+            <input id="nft_mint_uri" placeholder="uri (e.j. 'token0.json')" />
+            <button id="btnNftMint" class="role-btn">Mint NFT</button>
+        </div>
+
+        <h4 style="color: #ffc107;">Funciones de Burner (ERC-20 & NFT)</h4>
+        <div class="row">
+            <label>Burn ERC-20:</label>
+            <input id="e20_burn_account" placeholder="account" />
+            <input id="e20_burn_amount" placeholder="amount" />
+            <button id="btnErc20Burn" class="role-btn" style="background-color: #ffc107;">Burn ERC-20</button>
+        </div>
+         <div class="row">
+            <label>Burn NFT:</label>
+            <input id="nft_burn_tokenId" placeholder="tokenId" type="number" min="0" />
+            <button id="btnNftBurn" class="role-btn" style="background-color: #ffc107;">Burn NFT</button>
+        </div>
+
+        <hr>
+        <h4 style="color: #dc3545;">Funciones de Owner</h4>
+         <div class="row">
+            <label>Control Pausa:</label>
+            <button id="btnPause" class="admin-btn">Pause</button>
+            <button id="btnUnpause" class="role-btn">Unpause</button>
+        </div>
+        <div class="row">
+            <label>TransferOwnership:</label>
+            <input id="new_owner" placeholder="new owner" />
+            <button id="btnTransferOwnership" class="admin-btn">Transfer</button>
+        </div>
+        <div class="row">
+            <label>Set Base URI (NFT):</label>
+            <input id="base_uri" placeholder="https://api.my-nft.com/" />
+            <button id="btnSetBaseURI" class="admin-btn">Set URI</button>
+        </div>
+        <div class="row">
+            <label>Gestión Minters:</label>
+            <input id="minter_addr" placeholder="account" />
+            <button id="btnAddMinter" class="admin-btn">AddMinter</button>
+            <button id="btnRemoveMinter" class="admin-btn">RemoveMinter</button>
+        </div>
+        <div class="row">
+            <label>Gestión Burners:</label>
+            <input id="burner_addr" placeholder="account" />
+            <button id="btnAddBurner" class="admin-btn">AddBurner</button>
+            <button id="btnRemoveBurner" class="admin-btn">RemoveBurner</button>
+        </div>
+      </div>
+
+      <!-- Salida y datos -->
+      <script id="serverAccountsData" type="application/json">{{ accounts|tojson|safe }}</script>
+      <div id="output">Salida...</div>
+
+    </div> <!-- Fin de #main-content -->
+  </div> <!-- Fin de .page-container -->
+
+
+  <!-- El Javascript ha sido modificado para poblar la sidebar -->
+  <script>
+    // --- Helpers ---
+    const accountSelect = document.getElementById('accountSelect');
+    const output = document.getElementById('output');
+    const accountListContainer = document.getElementById('account-list'); // ¡¡¡NUEVO!!!
+
+    const serverAccountsDataEl = document.getElementById('serverAccountsData');
+    const serverAccounts = serverAccountsDataEl ? JSON.parse(serverAccountsDataEl.textContent) : [];
+    
+    // ¡¡¡MODIFICADO!!!: Este bucle ahora hace dos cosas:
+    // 1. Rellena el <select>
+    // 2. Rellena la nueva barra lateral #account-list
+    serverAccounts.forEach((a, index) => {
+      // 1. Rellenar el <select>
+      const opt = document.createElement('option');
+      opt.value = a;
+      opt.text = a;
+      accountSelect.appendChild(opt);
+
+      // 2. Rellenar la barra lateral
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'account-item';
+      
+      const titleStrong = document.createElement('strong');
+      titleStrong.textContent = `Cuenta ${index + 1}:`;
+      
+      const addressSpan = document.createElement('span');
+      addressSpan.textContent = a;
+      
+      itemDiv.appendChild(titleStrong);
+      itemDiv.appendChild(addressSpan);
+      accountListContainer.appendChild(itemDiv);
+    });
+
+    function show(msg) {
+      const time = new Date().toLocaleTimeString();
+      output.textContent = `[${time}] ${msg}\n\n` + output.textContent;
+    }
+
+    async function postJson(path, data) {
+      try {
+        const res = await fetch(path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const j = await res.json();
+        
+        // Determinar si es TX o API
+        if(path.startsWith('/tx/')) {
+            if (j.success) show(`${path} OK txHash: ${j.txHash}`); 
+            else show(`${path} ERROR: ${j.error}`);
+        } else {
+             if (j.success) show(`${path} -> ${JSON.stringify(j.result)}`); 
+             else show(`${path} ERROR: ${j.error}`);
+        }
+      } catch (e) {
+        show(`Fetch/POST error en ${path}: ${e}`);
+      }
+    }
+    
+    async function apiGet(path) {
+         try {
+            const res = await fetch(path);
+            const j = await res.json();
+            if (j.success) show(`${path} -> ${JSON.stringify(j.result)}`);
+            else show(`${path} -> ERROR: ${j.error}`);
+        } catch (e) { show(`Fetch GET error en ${path}: ${e}`); }
+    }
+
+    // --- Bind Botones Globales/Admin ---
+    document.getElementById('btnOwner').addEventListener('click', () => apiGet('/api/admin/owner'));
+    document.getElementById('btnPaused').addEventListener('click', () => apiGet('/api/admin/paused'));
+    document.getElementById('btnIsMinter').addEventListener('click', () => postJson('/api/admin/isMinter', { address: document.getElementById('isMinterAddr').value }));
+    document.getElementById('btnIsBurner').addEventListener('click', () => postJson('/api/admin/isBurner', { address: document.getElementById('isBurnerAddr').value }));
+    document.getElementById('btnPause').addEventListener('click', () => postJson('/tx/admin/pause', { from: accountSelect.value }));
+    document.getElementById('btnUnpause').addEventListener('click', () => postJson('/tx/admin/unpause', { from: accountSelect.value }));
+    document.getElementById('btnTransferOwnership').addEventListener('click', () => postJson('/tx/admin/transferOwnership', { from: accountSelect.value, newOwner: document.getElementById('new_owner').value }));
+    document.getElementById('btnSetBaseURI').addEventListener('click', () => postJson('/tx/admin/setBaseURI', { from: accountSelect.value, uri: document.getElementById('base_uri').value }));
+    document.getElementById('btnAddMinter').addEventListener('click', () => postJson('/tx/admin/addMinter', { from: accountSelect.value, account: document.getElementById('minter_addr').value }));
+    document.getElementById('btnRemoveMinter').addEventListener('click', () => postJson('/tx/admin/removeMinter', { from: accountSelect.value, account: document.getElementById('minter_addr').value }));
+    document.getElementById('btnAddBurner').addEventListener('click', () => postJson('/tx/admin/addBurner', { from: accountSelect.value, account: document.getElementById('burner_addr').value }));
+    document.getElementById('btnRemoveBurner').addEventListener('click', () => postJson('/tx/admin/removeBurner', { from: accountSelect.value, account: document.getElementById('burner_addr').value }));
+
+    // --- Bind Botones ERC-20 ---
+    document.getElementById('btnErc20Name').addEventListener('click', () => apiGet('/api/erc20/name'));
+    document.getElementById('btnErc20Symbol').addEventListener('click', () => apiGet('/api/erc20/symbol'));
+    document.getElementById('btnErc20Decimals').addEventListener('click', () => apiGet('/api/erc20/decimals'));
+    document.getElementById('btnErc20TotalSupply').addEventListener('click', () => apiGet('/api/erc20/totalSupply'));
+    document.getElementById('btnErc20Balance').addEventListener('click', () => postJson('/api/erc20/balanceOf', { address: document.getElementById('e20_balanceAddr').value }));
+    document.getElementById('btnErc20Allowance').addEventListener('click', () => postJson('/api/erc20/allowance', { owner: document.getElementById('e20_allow_owner').value, spender: document.getElementById('e20_allow_spender').value }));
+    document.getElementById('btnErc20Transfer').addEventListener('click', () => postJson('/tx/erc20/transfer', { from: accountSelect.value, to: document.getElementById('e20_tx_to').value, amount: document.getElementById('e20_tx_amount').value }));
+    document.getElementById('btnErc20Approve').addEventListener('click', () => postJson('/tx/erc20/approve', { from: accountSelect.value, spender: document.getElementById('e20_app_spender').value, amount: document.getElementById('e20_app_amount').value }));
+    document.getElementById('btnErc20TransferFrom').addEventListener('click', () => postJson('/tx/erc20/transferFrom', { from: accountSelect.value, owner: document.getElementById('e20_tf_owner').value, to: document.getElementById('e20_tf_to').value, amount: document.getElementById('e20_tf_amount').value }));
+    document.getElementById('btnErc20IncAllow').addEventListener('click', () => postJson('/tx/erc20/increaseAllowance', { from: accountSelect.value, spender: document.getElementById('e20_allow_chg_spender').value, amount: document.getElementById('e20_allow_chg_amount').value }));
+    document.getElementById('btnErc20DecAllow').addEventListener('click', () => postJson('/tx/erc20/decreaseAllowance', { from: accountSelect.value, spender: document.getElementById('e20_allow_chg_spender').value, amount: document.getElementById('e20_allow_chg_amount').value }));
+    document.getElementById('btnErc20Mint').addEventListener('click', () => postJson('/tx/erc20/mint', { from: accountSelect.value, to: document.getElementById('e20_mint_to').value, amount: document.getElementById('e20_mint_amount').value }));
+    document.getElementById('btnErc20Burn').addEventListener('click', () => postJson('/tx/erc2Redo/burn', { from: accountSelect.value, account: document.getElementById('e20_burn_account').value, amount: document.getElementById('e20_burn_amount').value }));
+    
+    // --- Bind Botones ERC-721 (NFT) ---
+    document.getElementById('btnNftName').addEventListener('click', () => apiGet('/api/nft/name'));
+    document.getElementById('btnNftSymbol').addEventListener('click', () => apiGet('/api/nft/symbol'));
+    document.getElementById('btnNftTotalSupply').addEventListener('click', () => apiGet('/api/nft/totalSupply'));
+    document.getElementById('btnNftBalance').addEventListener('click', () => postJson('/api/nft/balanceOf', { address: document.getElementById('nft_balanceAddr').value }));
+    document.getElementById('btnNftOwnerOf').addEventListener('click', () => postJson('/api/nft/ownerOf', { tokenId: document.getElementById('nft_ownerOfId').value }));
+    document.getElementById('btnNftTokenURI').addEventListener('click', () => postJson('/api/nft/tokenURI', { tokenId: document.getElementById('nft_tokenURIId').value }));
+    document.getElementById('btnNftGetApproved').addEventListener('click', () => postJson('/api/nft/getApproved', { tokenId: document.getElementById('nft_getApprovedId').value }));
+    document.getElementById('btnNftIsApproved').addEventListener('click', () => postJson('/api/nft/isApprovedForAll', { owner: document.getElementById('nft_isApprovedOwner').value, operator: document.getElementById('nft_isApprovedOperator').value }));
+    document.getElementById('btnNftApprove').addEventListener('click', () => postJson('/tx/nft/approve', { from: accountSelect.value, to: document.getElementById('nft_app_to').value, tokenId: document.getElementById('nft_app_tokenId').value }));
+    document.getElementById('btnNftSetApproval').addEventListener('click', () => postJson('/tx/nft/setApprovalForAll', { from: accountSelect.value, operator: document.getElementById('nft_sa_operator').value, approved: document.getElementById('nft_sa_check').checked }));
+    document.getElementById('btnNftTransferFrom').addEventListener('click', () => postJson('/tx/nft/transferFrom', { from: accountSelect.value, owner: document.getElementById('nft_tf_owner').value, to: document.getElementById('nft_tf_to').value, tokenId: document.getElementById('nft_tf_tokenId').value }));
+    document.getElementById('btnNftMint').addEventListener('click', () => postJson('/tx/nft/mint', { from: accountSelect.value, to: document.getElementById('nft_mint_to').value, tokenId: document.getElementById('nft_mint_tokenId').value, uri: document.getElementById('nft_mint_uri').value }));
+    document.getElementById('btnNftBurn').addEventListener('click', () => postJson('/tx/nft/burn', { from: accountSelect.value, tokenId: document.getElementById('nft_burn_tokenId').value }));
+
+    // Mensaje inicial
+    show("Cuentas de Ganache cargadas en el panel izquierdo.");
+  </script>
+</body>
+</html>
+

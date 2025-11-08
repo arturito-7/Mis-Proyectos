@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Interfaz MiTokenSeguro (ERC-20)</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; max-width:900px; margin:20px auto; }
+    .row { display:flex; gap:10px; margin-bottom:8px; align-items:center; }
+    label { width:140px; }
+    input, select, button { padding:6px; }
+    #output { white-space:pre-wrap; background:#f7f7f7; padding:10px; border-radius:6px; margin-top:12px; min-height:120px; }
+    .card { border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:12px;}
+  </style>
+</head>
+<body>
+  <h2>Interfaz MiTokenSeguro (demo)</h2>
+
+  <div class="card">
+    <div class="row">
+      <label>Cuenta (from):</label>
+      <select id="accountSelect"></select>
+    </div>
+
+    <div class="row">
+      <label>Lecturas rápidas:</label>
+      <button id="btnName">name</button>
+      <button id="btnSymbol">symbol</button>
+      <button id="btnDecimals">decimals</button>
+      <button id="btnTotalSupply">totalSupply</button>
+    </div>
+
+    <div class="row">
+      <label>balanceOf (address):</label>
+      <input id="balanceAddr" placeholder="0x..." style="flex:1"/>
+      <button id="btnBalance">Consultar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h4>Transacciones</h4>
+
+    <div class="row">
+      <label>Transfer</label>
+      <input id="tx_to" placeholder="to address" />
+      <input id="tx_amount" placeholder="amount (p.e. 1.5)" />
+      <button id="btnTransfer">Transfer</button>
+    </div>
+
+    <div class="row">
+      <label>Mint (onlyOwner)</label>
+      <input id="mint_to" placeholder="to address" />
+      <input id="mint_amount" placeholder="amount" />
+      <button id="btnMint">Mint</button>
+    </div>
+
+    <div class="row">
+      <label>Burn (onlyOwner)</label>
+      <input id="burn_account" placeholder="account" />
+      <input id="burn_amount" placeholder="amount" />
+      <button id="btnBurn">Burn</button>
+    </div>
+
+    <div class="row">
+      <label>TransferOwnership</label>
+      <input id="new_owner" placeholder="new owner" />
+      <button id="btnTransferOwnership">TransferOwnership</button>
+      <button id="btnRenounceOwnership">RenounceOwnership</button>
+    </div>
+
+    <div class="row">
+      <label>Approve</label>
+      <input id="approve_spender" placeholder="spender" />
+      <input id="approve_amount" placeholder="amount" />
+      <button id="btnApprove">Approve</button>
+    </div>
+
+    <div class="row">
+      <label>increaseAllowance</label>
+      <input id="inc_allowance_spender" placeholder="spender" />
+      <input id="inc_allowance_amount" placeholder="amount" />
+      <button id="btnIncreaseAllowance">increaseAllowance</button>
+    </div>
+
+    <div class="row">
+      <label>decreaseAllowance</label>
+      <input id="dec_allowance_spender" placeholder="spender" />
+      <input id="dec_allowance_amount" placeholder="amount" />
+      <button id="btnDecreaseAllowance">decreaseAllowance</button>
+    </div>
+
+    <div class="row">
+      <label>Allowance</label>
+      <input id="allowance_owner" placeholder="owner" />
+      <input id="allowance_spender" placeholder="spender" />
+      <button id="btnAllowance">Allowance</button>
+    </div>
+
+    <div class="row">
+      <label>TransferFrom</label>
+      <input id="tf_owner" placeholder="owner" />
+      <input id="tf_to" placeholder="to" />
+      <input id="tf_amount" placeholder="amount" />
+      <button id="btnTransferFrom">TransferFrom</button>
+    </div>
+  </div>
+
+  <!-- Aquí Flask inyectará las cuentas desbloqueadas como JSON (seguro) -->
+  <script id="serverAccountsData" type="application/json">{{ accounts|tojson }}</script>
+
+  <div id="output">Salida...</div>
+
+  <!-- TODO: todo el JS dentro de <script> para que no se muestre como texto -->
+  <script>
+    // Elementos
+    const accountSelect = document.getElementById('accountSelect');
+    const output = document.getElementById('output');
+
+    // Rellenar cuentas desde el servidor (usamos el script JSON seguro)
+    const serverAccountsDataEl = document.getElementById('serverAccountsData');
+    const serverAccounts = serverAccountsDataEl ? JSON.parse(serverAccountsDataEl.textContent) : [];
+    serverAccounts.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a;
+      opt.text = a;
+      accountSelect.appendChild(opt);
+    });
+
+    function show(msg) {
+      const time = new Date().toLocaleTimeString();
+      output.textContent = `[${time}] ${msg}\n\n` + output.textContent;
+    }
+
+    async function apiGet(path) {
+      try {
+        const res = await fetch(path);
+        const j = await res.json();
+        if (j.success) show(`${path} -> ${JSON.stringify(j.result)}`);
+        else show(`${path} -> ERROR: ${j.error}`);
+      } catch (e) {
+        show(`Fetch error: ${e}`);
+      }
+    }
+
+    async function postJson(path, data) {
+      try {
+        const res = await fetch(path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return await res.json();
+      } catch (e) {
+        return { success: false, error: e.toString() };
+      }
+    }
+
+    // Bind botones
+    document.getElementById('btnName').addEventListener('click', () => apiGet('/api/name'));
+    document.getElementById('btnSymbol').addEventListener('click', () => apiGet('/api/symbol'));
+    document.getElementById('btnDecimals').addEventListener('click', () => apiGet('/api/decimals'));
+    document.getElementById('btnTotalSupply').addEventListener('click', () => apiGet('/api/totalSupply'));
+
+    document.getElementById('btnBalance').addEventListener('click', () => {
+      const addr = document.getElementById('balanceAddr').value;
+      postJson('/api/balanceOf', { address: addr }).then(j => {
+        if (j.success) show(`balanceOf(${addr}) -> ${j.result}`);
+        else show(`balanceOf ERROR: ${j.error}`);
+      });
+    });
+
+    document.getElementById('btnTransfer').addEventListener('click', async () => {
+      const from = accountSelect.value;
+      const to = document.getElementById('tx_to').value;
+      const amount = document.getElementById('tx_amount').value;
+      const j = await postJson('/tx/transfer', { from, to, amount });
+      if (j.success) show(`transfer OK txHash: ${j.txHash}`); else show(`transfer ERROR: ${j.error}`);
+    });
+
+    document.getElementById('btnMint').addEventListener('click', async () => {
+      const from = accountSelect.value;
+      const to = document.getElementById('mint_to').value;
+      const amount = document.getElementById('mint_amount').value;
+      const j = await postJson('/tx/mint', { from, to, amount });
+      if (j.success) show(`mint OK txHash: ${j.txHash}`); else show(`mint ERROR: ${j.error}`);
+    });
+
+    document.getElementById('btnBurn').addEventListener('click', async () => {
+      const from = accountSelect.value;
+      const account = document.getElementById('burn_account').value;
+      const amount = document.getElementById('burn_amount').value;
+      const j = await postJson('/tx/burn', { from, account, amount });
+      if (j.success) show(`burn OK txHash: ${j.txHash}`); else show(`burn ERROR: ${j.error}`);
+    });
+
+    document.getElementById('btnTransferOwnership').addEventListener('click', async () => {
+      const from = accountSelect.value;
+      const newOwner = document.getElementById('new_owner').value;
+      const j = await postJson('/tx/transferOwnership', { from, newOwner });
+      if (j.success) show(`transferOwnership OK txHash: ${j.txHash}`); else show(`transferOwnership ERROR: ${j.error}`);
+    });
+
+    document.getElementById('btnRenounceOwnership').addEventListener('click', async () => {
+      const from = accountSelect.value;
+      const j = await postJson('/tx/renounceOwnership', { from });
+      if (j.success) show(`renounceOwnership OK txHash: ${j.txHash}`); else show(`renounceOwnership ERROR: ${j.error}`);
+    });
+
+    document.getElementById('btnApprove').addEventListener('click', async () => {
+      const from = accountSelect.value;
+      const spender = document.getElementById('approve_spender').value;
+      const amount = document.getElementById('approve_amount').value;
+      const j = await postJson('/tx/approve', { from, spender, amount });
+      if (j.success) show(`approve OK txHash: ${j.txHash}`); else show(`approve ERROR: ${j.error}`);
+    });
+
+    document.getElementById('btnIncreaseAllowance').addEventListener('click', async () => {
+      const from = accountSelect.value;
+      const spender = document.getElementById('inc_allowance_spender').value;
+      const amount = document.getElementById('inc_allowance_amount').value;
+      const j = await postJson('/tx/increaseAllowance', { from, spender, amount });
+      if (j.success) show(`increaseAllowance OK txHash: ${j.txHash}`); else show(`increaseAllowance ERROR: ${j.error}`);
+    });
+
+    document.getElementById('btnDecreaseAllowance').addEventListener('click', async () => {
+      const from = accountSelect.value;
+      const spender = document.getElementById('dec_allowance_spender').value;
+      const amount = document.getElementById('dec_allowance_amount').value;
+      const j = await postJson('/tx/decreaseAllowance', { from, spender, amount });
+      if (j.success) show(`decreaseAllowance OK txHash: ${j.txHash}`); else show(`decreaseAllowance ERROR: ${j.error}`);
+    });
+
+    document.getElementById('btnAllowance').addEventListener('click', async () => {
+      const owner = document.getElementById('allowance_owner').value;
+      const spender = document.getElementById('allowance_spender').value;
+      const j = await postJson('/api/allowance', { owner, spender });
+      if (j.success) show(`allowance(${owner} -> ${spender}) -> ${j.result}`);
+      else show(`allowance ERROR: ${j.error}`);
+    });
+
+    document.getElementById('btnTransferFrom').addEventListener('click', async () => {
+      const from = accountSelect.value;
+      const owner = document.getElementById('tf_owner').value;
+      const to = document.getElementById('tf_to').value;
+      const amount = document.getElementById('tf_amount').value;
+      const j = await postJson('/tx/transferFrom', { from, owner, to, amount });
+      if (j.success) show(`transferFrom OK txHash: ${j.txHash}`); else show(`transferFrom ERROR: ${j.error}`);
+    });
+
+    // Mensaje inicial con cuentas
+    show(`Cuentas disponibles: ${serverAccounts.join(', ')}`);
+  </script>
+</body>
+</html>

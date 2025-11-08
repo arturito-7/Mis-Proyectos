@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-admin"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Interfaz contratoTop (ERC-721)</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; max-width:900px; margin:20px auto; }
+    .row { display:flex; gap:10px; margin-bottom:8px; align-items:center; }
+    label { min-width:140px; text-align: right; font-size: 0.9em; color: #333;}
+    input, select, button { padding:6px; flex-grow: 1; }
+    button { flex-grow: 0; cursor: pointer; }
+    h4 { margin-top: 20px; border-bottom: 1px solid #eee; padding-bottom: 4px;}
+    #output { white-space:pre-wrap; background:#f7f7f7; padding:10px; border-radius:6px; margin-top:12px; min-height:120px; font-family: monospace; }
+    .card { border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:12px;}
+    input[type="checkbox"] { flex-grow: 0; }
+  </style>
+</head>
+<body>
+  <h2>Interfaz <code>contratoTop</code> (ERC-721 con Roles)</h2>
+
+  <div class="card">
+    <h4>Información General y Roles</h4>
+    <div class="row">
+      <label>Cuenta (from):</label>
+      <select id="accountSelect"></select>
+    </div>
+    <div class="row">
+        <label>Lecturas Globales:</label>
+        <button id="btnName">name</button>
+        <button id="btnSymbol">symbol</button>
+        <button id="btnTotalSupply">totalSupply</button>
+        <button id="btnOwner">owner</button>
+        <button id="btnPaused">paused?</button>
+    </div>
+    <div class="row">
+        <label>balanceOf (address):</label>
+        <input id="balanceAddr" placeholder="0x..."/>
+        <button id="btnBalance">Consultar</button>
+    </div>
+    <div class="row">
+        <label>ownerOf (tokenId):</label>
+        <input id="ownerOfId" placeholder="Token ID (e.j. 0)"/>
+        <button id="btnOwnerOf">Consultar</button>
+    </div>
+    <div class="row">
+        <label>tokenURI (tokenId):</label>
+        <input id="tokenURIId" placeholder="Token ID (e.j. 0)"/>
+        <button id="btnTokenURI">Consultar</button>
+    </div>
+    <div class="row">
+        <label>isMinter (address):</label>
+        <input id="isMinterAddr" placeholder="0x..."/>
+        <button id="btnIsMinter">Consultar</button>
+    </div>
+    <div class="row">
+        <label>isBurner (address):</label>
+        <input id="isBurnerAddr" placeholder="0x..."/>
+        <button id="btnIsBurner">Consultar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h4>Transacciones (Minter, Burner, Usuario)</h4>
+    <div class="row">
+        <label>Mint (onlyMinter):</label>
+        <input id="mint_to" placeholder="to address" />
+        <input id="mint_tokenId" placeholder="tokenId" type="number" min="0" />
+        <input id="mint_uri" placeholder="uri (e.j. 'token0.json')" />
+        <button id="btnMint">Mint</button>
+    </div>
+    <div class="row">
+        <label>Burn (onlyBurner):</label>
+        <input id="burn_tokenId" placeholder="tokenId" type="number" min="0" />
+        <button id="btnBurn">Burn</button>
+    </div>
+    <hr>
+    <div class="row">
+      <label>Approve:</label>
+      <input id="approve_to" placeholder="to (spender)" />
+      <input id="approve_tokenId" placeholder="tokenId" type="number" min="0" />
+      <button id="btnApprove">Approve</button>
+    </div>
+     <div class="row">
+      <label>SetApprovalForAll:</label>
+      <input id="sa_operator" placeholder="operator" />
+      <input id="sa_approved_check" type="checkbox" /> <label style="min-width:0; text-align: left;">Approved?</label>
+      <button id="btnSetApprovalForAll">Set</button>
+    </div>
+    <div class="row">
+      <label>TransferFrom:</label>
+      <input id="tf_owner" placeholder="owner (from)" />
+      <input id="tf_to" placeholder="to (recipient)" />
+      <input id="tf_tokenId" placeholder="tokenId" type="number" min="0" />
+      <button id="btnTransferFrom">TransferFrom</button>
+    </div>
+    <hr>
+     <div class="row">
+        <label>getApproved (tokenId):</label>
+        <input id="getApprovedId" placeholder="Token ID (e.j. 0)"/>
+        <button id="btnGetApproved">Consultar</button>
+    </div>
+    <div class="row">
+        <label>isApprovedForAll:</label>
+        <input id="isApprovedOwner" placeholder="owner"/>
+        <input id="isApprovedOperator" placeholder="operator"/>
+        <button id="btnIsApprovedForAll">Consultar</button>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h4>Admin (onlyOwner)</h4>
+    <div class="row">
+      <label>Control Pausa:</label>
+      <button id="btnPause">Pause</button>
+      <button id="btnPause">Unpause</button>
+    </div>
+    <div class="row">
+      <label>TransferOwnership:</label>
+      <input id="new_owner" placeholder="new owner" />
+      <button id="btnTransferOwnership">Transfer</button>
+    </div>
+    <div class="row">
+      <label>Set Base URI:</label>
+      <input id="base_uri" placeholder="https://api.my-nft.com/" />
+      <button id="btnSetBaseURI">Set URI</button>
+    </div>
+     <div class="row">
+      <label>Gestión Minters:</label>
+      <input id="minter_addr" placeholder="account" />
+      <button id="btnAddMinter">AddMinter</button>
+      <button id="btnRemoveMinter">RemoveMinter</button>
+    </div>
+    <div class="row">
+      <label>Gestión Burners:</label>
+      <input id="burner_addr" placeholder="account" />
+      <button id="btnAddBurner">AddBurner</button>
+      <button id="btnRemoveBurner">RemoveBurner</button>
+    </div>
+  </div>
+
+  <script id="serverAccountsData" type="application/json">{{ accounts|tojson }}</script>
+  <div id="output">Salida...</div>
+
+  <script>
+    const accountSelect = document.getElementById('accountSelect');
+    const output = document.getElementById('output');
+
+    // Rellenar cuentas
+    const serverAccountsDataEl = document.getElementById('serverAccountsData');
+    const serverAccounts = serverAccountsDataEl ? JSON.parse(serverAccountsDataEl.textContent) : [];
+    serverAccounts.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a;
+      opt.text = a;
+      accountSelect.appendChild(opt);
+    });
+
+    function show(msg) {
+      const time = new Date().toLocaleTimeString();
+      output.textContent = `[${time}] ${msg}\n\n` + output.textContent;
+    }
+
+    async function apiGet(path) {
+      try {
+        const res = await fetch(path);
+        const j = await res.json();
+        if (j.success) show(`${path} -> ${JSON.stringify(j.result)}`);
+        else show(`${path} -> ERROR: ${j.error}`);
+      } catch (e) { show(`Fetch error: ${e}`); }
+    }
+
+    async function postJson(path, data) {
+      try {
+        const res = await fetch(path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const j = await res.json();
+        if(path.startsWith('/tx/')) {
+            if (j.success) show(`${path} OK txHash: ${j.txHash}`); else show(`${path} ERROR: ${j.error}`);
+        } else {
+             if (j.success) show(`${path} -> ${JSON.stringify(j.result)}`); else show(`${path} ERROR: ${j.error}`);
+        }
+      } catch (e) {
+        show(`Fetch/POST error: ${e}`);
+      }
+    }
+
+    // --- Bind Botones Lectura ---
+    document.getElementById('btnName').addEventListener('click', () => apiGet('/api/name'));
+    document.getElementById('btnSymbol').addEventListener('click', () => apiGet('/api/symbol'));
+    document.getElementById('btnTotalSupply').addEventListener('click', () => apiGet('/api/totalSupply'));
+    document.getElementById('btnOwner').addEventListener('click', () => apiGet('/api/owner'));
+    document.getElementById('btnPaused').addEventListener('click', () => apiGet('/api/paused'));
+
+    document.getElementById('btnBalance').addEventListener('click', () => {
+      postJson('/api/balanceOf', { address: document.getElementById('balanceAddr').value });
+    });
+    document.getElementById('btnOwnerOf').addEventListener('click', () => {
+      postJson('/api/ownerOf', { tokenId: document.getElementById('ownerOfId').value });
+    });
+    document.getElementById('btnTokenURI').addEventListener('click', () => {
+      postJson('/api/tokenURI', { tokenId: document.getElementById('tokenURIId').value });
+    });
+    document.getElementById('btnIsMinter').addEventListener('click', () => {
+      postJson('/api/isMinter', { address: document.getElementById('isMinterAddr').value });
+    });
+     document.getElementById('btnIsBurner').addEventListener('click', () => {
+      postJson('/api/isBurner', { address: document.getElementById('isBurnerAddr').value });
+    });
+    document.getElementById('btnGetApproved').addEventListener('click', () => {
+      postJson('/api/getApproved', { tokenId: document.getElementById('getApprovedId').value });
+    });
+    document.getElementById('btnIsApprovedForAll').addEventListener('click', () => {
+      postJson('/api/isApprovedForAll', { 
+          owner: document.getElementById('isApprovedOwner').value,
+          operator: document.getElementById('isApprovedOperator').value
+      });
+    });
+    
+    // --- Bind Botones Transacción ---
+    document.getElementById('btnMint').addEventListener('click', () => {
+      postJson('/tx/mint', { 
+        from: accountSelect.value,
+        to: document.getElementById('mint_to').value,
+        tokenId: document.getElementById('mint_tokenId').value,
+        uri: document.getElementById('mint_uri').value
+      });
+    });
+    
+    document.getElementById('btnBurn').addEventListener('click', () => {
+      postJson('/tx/burn', { 
+        from: accountSelect.value,
+        tokenId: document.getElementById('burn_tokenId').value
+      });
+    });
+
+    document.getElementById('btnApprove').addEventListener('click', () => {
+      postJson('/tx/approve', { 
+        from: accountSelect.value,
+        to: document.getElementById('approve_to').value,
+        tokenId: document.getElementById('approve_tokenId').value
+      });
+    });
+
+    document.getElementById('btnSetApprovalForAll').addEventListener('click', () => {
+      postJson('/tx/setApprovalForAll', { 
+        from: accountSelect.value,
+        operator: document.getElementById('sa_operator').value,
+        approved: document.getElementById('sa_approved_check').checked
+      });
+    });
+
+    document.getElementById('btnTransferFrom').addEventListener('click', () => {
+      postJson('/tx/transferFrom', { 
+        from: accountSelect.value, // msg.sender
+        owner: document.getElementById('tf_owner').value, // 'from' en la función
+        to: document.getElementById('tf_to').value,
+        tokenId: document.getElementById('tf_tokenId').value
+      });
+    });
+
+    // --- Bind Botones Admin ---
+    document.getElementById('btnPause').addEventListener('click', () => postJson('/tx/pause', { from: accountSelect.value }));
+    document.getElementById('btnUnpause').addEventListener('click', () => postJson('/tx/unpause', { from: accountSelect.value }));
+
+    document.getElementById('btnTransferOwnership').addEventListener('click', () => {
+      postJson('/tx/transferOwnership', { 
+        from: accountSelect.value,
+        newOwner: document.getElementById('new_owner').value
+      });
+    });
+    
+    document.getElementById('btnSetBaseURI').addEventListener('click', () => {
+      postJson('/tx/setBaseURI', { 
+        from: accountSelect.value,
+        uri: document.getElementById('base_uri').value
+      });
+    });
+
+    document.getElementById('btnAddMinter').addEventListener('click', () => {
+      postJson('/tx/addMinter', { 
+        from: accountSelect.value,
+        account: document.getElementById('minter_addr').value
+      });
+    });
+    document.getElementById('btnRemoveMinter').addEventListener('click', () => {
+      postJson('/tx/removeMinter', { 
+        from: accountSelect.value,
+        account: document.getElementById('minter_addr').value
+      });
+    });
+
+    document.getElementById('btnAddBurner').addEventListener('click', () => {
+      postJson('/tx/addBurner', { 
+        from: accountSelect.value,
+        account: document.getElementById('burner_addr').value
+      });
+    });
+    document.getElementById('btnRemoveBurner').addEventListener('click', () => {
+      postJson('/tx/removeBurner', { 
+        from: accountSelect.value,
+        account: document.getElementById('burner_addr').value
+      });
+    });
+
+    // Mensaje inicial
+    show(`Cuentas disponibles: ${serverAccounts.join(', ')}`);
+  </script>
+</body>
+</html>

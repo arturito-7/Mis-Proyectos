@@ -1,0 +1,259 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+interface IERC721Receiver {
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external returns (bytes4);
+}
+
+contract tokenAvanzado {
+    string public name;
+    string public symbol;
+    address public owner;
+
+    mapping(uint256 => address) private _owners;
+    mapping(address => uint256) private _balances;
+    mapping(uint256 => address) private _tokenApprovals;
+    mapping(address => mapping(address => bool)) private _operatorApprovals;
+
+    //He añadido que los URI sean únicos porque dos NFT no deberían compartir la
+    //información relacionada
+    mapping(string => bool) private _usedURIs;
+    mapping(uint256 => string) private _tokenURIs;
+    string private _baseURI = "";
+
+    // --- ENUMERACION ---
+    uint256[] private _allTokens;
+    mapping(uint256 => uint256) private _allTokensIndex;
+    mapping(address => uint256[]) private _ownedTokens;
+    mapping(uint256 => uint256) private _ownedTokensIndex;
+
+    // --- EVENTOS ---
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Solo el dueno del contrato puede hacer esto");
+        _;
+    }
+
+    constructor(string memory _name, string memory _symbol) {
+        name = _name;
+        symbol = _symbol;
+        owner = msg.sender;
+    }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0), "Direccion invalida");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    function balanceOf(address owner_) public view returns (uint256) {
+        require(owner_ != address(0), "Direccion no valida");
+        return _balances[owner_];
+    }
+
+    function ownerOf(uint256 tokenId) public view returns (address) {
+        address owner_ = _owners[tokenId];
+        require(owner_ != address(0), "Token no existe");
+        return owner_;
+    }
+
+    // ================================
+    // MINT / BURN
+    // ================================
+    function mint(address to, uint256 tokenId, string memory uri) public onlyOwner {
+        require(!_usedURIs[uri], "El URI ya esta en uso");
+        _mint(to, tokenId);
+        _setTokenURI(tokenId, uri);
+        _usedURIs[uri] = true;
+
+        // Enumeracion
+        _addTokenToAllTokensEnumeration(tokenId);
+        _addTokenToOwnerEnumeration(to, tokenId);
+    }
+
+    function _mint(address to, uint256 tokenId) internal {
+        require(to != address(0), "No se puede mintear a la direccion cero");
+        require(_owners[tokenId] == address(0), "Token ya existe");
+
+        _owners[tokenId] = to;
+        _balances[to] += 1;
+        emit Transfer(address(0), to, tokenId);
+    }
+
+    function burn(uint256 tokenId) public onlyOwner {
+        address tokenOwner = ownerOf(tokenId);
+        _approve(address(0), tokenId);
+        _balances[tokenOwner] -= 1;
+
+        // Enumeracion
+        _removeTokenFromOwnerEnumeration(tokenOwner, tokenId);
+        _removeTokenFromAllTokensEnumeration(tokenId);
+
+        delete _owners[tokenId];
+        delete _tokenURIs[tokenId];
+        delete _usedURIs[_tokenURIs[tokenId]];
+
+        emit Transfer(tokenOwner, address(0), tokenId);
+    }
+
+    // ================================
+    // TRANSFERS
+    // ================================
+    function transferFrom(address from, address to, uint256 tokenId) public {
+        address owner_ = ownerOf(tokenId);
+        require(
+            msg.sender == owner_ || msg.sender == getApproved(tokenId) || isApprovedForAll(owner_, msg.sender),
+            "No autorizado"
+        );
+        require(owner_ == from, "From no es el dueno");
+        require(to != address(0), "Direccion destino invalida");
+        require(from != to, "No puedes transferirte a ti mismo");
+
+        _approve(address(0), tokenId);
+        _balances[from] -= 1;
+        _balances[to] += 1;
+        _owners[tokenId] = to;
+
+        // Enumeracion
+        _removeTokenFromOwnerEnumeration(from, tokenId);
+        _addTokenToOwnerEnumeration(to, tokenId);
+
+        emit Transfer(from, to, tokenId);
+    }
+
+    function safeTransferFrom(address from, address to, uint256 tokenId) public {
+        safeTransferFrom(from, to, tokenId, "");
+    }
+
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public {
+        transferFrom(from, to, tokenId);
+        require(_checkOnERC721Received(from, to, tokenId, data), "Receptor no implementa ERC721Receiver");
+    }
+
+    function _checkOnERC721Received(address from, address to, uint256 tokenId, bytes memory data) private returns (bool) {
+        if (to.code.length > 0) {
+            try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data)
+                returns (bytes4 retval)
+            {
+                return retval == IERC721Receiver.onERC721Received.selector;
+            } catch {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // ================================
+    // APPROVALS
+    // ================================
+    function approve(address to, uint256 tokenId) public {
+        address owner_ = ownerOf(tokenId);
+        require(to != owner_, "No puedes aprobarte a ti mismo");
+        require(msg.sender == owner_ || isApprovedForAll(owner_, msg.sender), "No autorizado");
+        _approve(to, tokenId);
+    }
+
+    function getApproved(uint256 tokenId) public view returns (address) {
+        require(_owners[tokenId] != address(0), "Token no existe");
+        return _tokenApprovals[tokenId];
+    }
+
+    function _approve(address to, uint256 tokenId) internal {
+        _tokenApprovals[tokenId] = to;
+        emit Approval(ownerOf(tokenId), to, tokenId);
+    }
+
+    function setApprovalForAll(address operator, bool approved) public {
+        require(operator != msg.sender, "No puedes aprobarte a ti mismo");
+        _operatorApprovals[msg.sender][operator] = approved;
+        emit ApprovalForAll(msg.sender, operator, approved);
+    }
+
+    function isApprovedForAll(address owner_, address operator) public view returns (bool) {
+        return _operatorApprovals[owner_][operator];
+    }
+
+    // ================================
+    // METADATOS
+    // ================================
+    function _setTokenURI(uint256 tokenId, string memory uri) internal {
+        require(_owners[tokenId] != address(0), "Token no existe");
+        _tokenURIs[tokenId] = uri;
+    }
+
+    function tokenURI(uint256 tokenId) public view returns (string memory) {
+        require(_owners[tokenId] != address(0), "Token no existe");
+        return string(abi.encodePacked(_baseURI, _tokenURIs[tokenId]));
+    }
+
+    function _setBaseURI(string memory newBaseURI) public onlyOwner {
+        _baseURI = newBaseURI;
+    }
+
+    // ================================
+    // ENUMERACION FUNCIONES PUBLICAS
+    // ================================
+    function totalSupply() public view returns (uint256) {
+        return _allTokens.length;
+    }
+
+    function tokenByIndex(uint256 index) public view returns (uint256) {
+        require(index < _allTokens.length, "Index out of bounds");
+        return _allTokens[index];
+    }
+
+    function tokenOfOwnerByIndex(address owner_, uint256 index) public view returns (uint256) {
+        require(index < _ownedTokens[owner_].length, "Index out of bounds");
+        return _ownedTokens[owner_][index];
+    }
+
+    // ================================
+    // ENUMERACION INTERNAS
+    // ================================
+    function _addTokenToOwnerEnumeration(address to, uint256 tokenId) private {
+        _ownedTokensIndex[tokenId] = _ownedTokens[to].length;
+        _ownedTokens[to].push(tokenId);
+    }
+
+    function _removeTokenFromOwnerEnumeration(address from, uint256 tokenId) private {
+        uint256 lastTokenIndex = _ownedTokens[from].length - 1;
+        uint256 tokenIndex = _ownedTokensIndex[tokenId];
+
+        if(tokenIndex != lastTokenIndex) {
+            uint256 lastTokenId = _ownedTokens[from][lastTokenIndex];
+            _ownedTokens[from][tokenIndex] = lastTokenId;
+            _ownedTokensIndex[lastTokenId] = tokenIndex;
+        }
+
+        _ownedTokens[from].pop();
+        delete _ownedTokensIndex[tokenId];
+    }
+
+    function _addTokenToAllTokensEnumeration(uint256 tokenId) private {
+        _allTokensIndex[tokenId] = _allTokens.length;
+        _allTokens.push(tokenId);
+    }
+
+    function _removeTokenFromAllTokensEnumeration(uint256 tokenId) private {
+        uint256 lastTokenIndex = _allTokens.length - 1;
+        uint256 tokenIndex = _allTokensIndex[tokenId];
+
+        if(tokenIndex != lastTokenIndex) {
+            uint256 lastTokenId = _allTokens[lastTokenIndex];
+            _allTokens[tokenIndex] = lastTokenId;
+            _allTokensIndex[lastTokenId] = tokenIndex;
+        }
+
+        _allTokens.pop();
+        delete _allTokensIndex[tokenId];
+    }
+}
