@@ -1,0 +1,18 @@
+# Ignorar carpetas de compilación
+target/
+out/
+
+# Ignorar la carpeta entera de configuración de IntelliJ
+.idea/
+
+# Ignorar archivos de proyecto de IntelliJ
+*.iml
+*.iws
+*.ipr
+
+# Ignorar la base de datos local
+data/
+
+# Ignorar archivos de log y crash
+*.log
+hs_err_pid*
