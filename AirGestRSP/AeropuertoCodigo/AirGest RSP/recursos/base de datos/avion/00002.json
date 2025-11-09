@@ -1,0 +1,16 @@
+{
+	"trabajadores": 9,
+	"fechaFabricacion": {
+		"mes": 9,
+		"dia": 10,
+		"anyo": 2022
+	},
+	"asientos": 40,
+	"matricula": "EC-234",
+	"idAerolinea": 5,
+	"id": 2,
+	"idModelo": 3,
+	"nombre": "Skyhawk",
+	"activo": true,
+	"idHangar": 3
+}

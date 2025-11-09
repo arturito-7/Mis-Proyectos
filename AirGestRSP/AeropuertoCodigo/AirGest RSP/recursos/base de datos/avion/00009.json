@@ -1,0 +1,16 @@
+{
+	"trabajadores": 17,
+	"fechaFabricacion": {
+		"mes": 3,
+		"dia": 8,
+		"anyo": 2023
+	},
+	"asientos": 26,
+	"matricula": "EC-901",
+	"idAerolinea": 4,
+	"id": 9,
+	"idModelo": 2,
+	"nombre": "Aurora",
+	"activo": true,
+	"idHangar": 1
+}

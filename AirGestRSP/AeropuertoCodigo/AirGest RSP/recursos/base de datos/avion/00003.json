@@ -1,0 +1,16 @@
+{
+	"trabajadores": 15,
+	"fechaFabricacion": {
+		"mes": 2,
+		"dia": 5,
+		"anyo": 2024
+	},
+	"asientos": 25,
+	"matricula": "EC-345",
+	"idAerolinea": 1,
+	"id": 3,
+	"idModelo": 5,
+	"nombre": "Voyager",
+	"activo": true,
+	"idHangar": 1
+}

@@ -1,0 +1,16 @@
+{
+	"trabajadores": 11,
+	"fechaFabricacion": {
+		"mes": 8,
+		"dia": 20,
+		"anyo": 2023
+	},
+	"asientos": 32,
+	"matricula": "EC-456",
+	"idAerolinea": 4,
+	"id": 4,
+	"idModelo": 2,
+	"nombre": "Falcon",
+	"activo": true,
+	"idHangar": 2
+}

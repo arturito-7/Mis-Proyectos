@@ -1,0 +1,16 @@
+{
+	"trabajadores": 14,
+	"fechaFabricacion": {
+		"mes": 12,
+		"dia": 25,
+		"anyo": 2022
+	},
+	"asientos": 28,
+	"matricula": "EC-567",
+	"idAerolinea": 2,
+	"id": 5,
+	"idModelo": 1,
+	"nombre": "Delta",
+	"activo": true,
+	"idHangar": 3
+}

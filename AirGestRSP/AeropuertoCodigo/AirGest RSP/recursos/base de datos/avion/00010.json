@@ -1,0 +1,16 @@
+{
+	"trabajadores": 18,
+	"fechaFabricacion": {
+		"mes": 11,
+		"dia": 3,
+		"anyo": 2022
+	},
+	"asientos": 31,
+	"matricula": "EC-012",
+	"idAerolinea": 2,
+	"id": 10,
+	"idModelo": 1,
+	"nombre": "Neptune",
+	"activo": true,
+	"idHangar": 2
+}

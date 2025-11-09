@@ -1,0 +1,16 @@
+{
+	"trabajadores": 12,
+	"fechaFabricacion": {
+		"mes": 6,
+		"dia": 15,
+		"anyo": 2023
+	},
+	"asientos": 35,
+	"matricula": "EC-123",
+	"idAerolinea": 3,
+	"id": 1,
+	"idModelo": 4,
+	"nombre": "Phoenix",
+	"activo": true,
+	"idHangar": 2
+}

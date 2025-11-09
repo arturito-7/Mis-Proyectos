@@ -1,0 +1,16 @@
+{
+	"trabajadores": 16,
+	"fechaFabricacion": {
+		"mes": 5,
+		"dia": 12,
+		"anyo": 2022
+	},
+	"asientos": 33,
+	"matricula": "EC-789",
+	"idAerolinea": 5,
+	"id": 7,
+	"idModelo": 3,
+	"nombre": "Orion",
+	"activo": true,
+	"idHangar": 2
+}

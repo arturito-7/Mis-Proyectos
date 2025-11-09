@@ -1,0 +1,16 @@
+{
+	"trabajadores": 10,
+	"fechaFabricacion": {
+		"mes": 7,
+		"dia": 18,
+		"anyo": 2024
+	},
+	"asientos": 37,
+	"matricula": "EC-890",
+	"idAerolinea": 1,
+	"id": 8,
+	"idModelo": 5,
+	"nombre": "Titan",
+	"activo": true,
+	"idHangar": 3
+}

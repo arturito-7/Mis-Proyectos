@@ -1,0 +1,16 @@
+{
+	"trabajadores": 13,
+	"fechaFabricacion": {
+		"mes": 10,
+		"dia": 30,
+		"anyo": 2023
+	},
+	"asientos": 38,
+	"matricula": "EC-678",
+	"idAerolinea": 3,
+	"id": 6,
+	"idModelo": 4,
+	"nombre": "Thunderbird",
+	"activo": true,
+	"idHangar": 1
+}
